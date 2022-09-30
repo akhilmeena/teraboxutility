@@ -1,7 +1,6 @@
-import pickle
-
 from selenium.webdriver.common.by import By
 from time import sleep
+import common.constant as Constant
 
 
 def login(driver):
@@ -15,15 +14,11 @@ def login(driver):
 
 def get_cookie(driver):
     driver.get(driver.current_url)
-    sleep(10)
+    sleep(Constant.WAIT_RELOAD)
     cookie = driver.get_cookie('ndus')
     value = 'ndus=' + cookie.get('value')
     return value
-    #get all cookies
-    # cookies = driver.get_cookies()
-    # for cookie in cookies:
-    #     name = cookie.get('name')
-    #     value = cookie.get('value')
+
 
 
 

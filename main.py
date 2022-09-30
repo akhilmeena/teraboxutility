@@ -11,7 +11,6 @@ setup_logging()
 
 
 def greet():
-    # TODO-dung: add greeting
     pass
 
 
@@ -25,12 +24,8 @@ if __name__ == '__main__':
         driver = profile.retrieve_driver()
         profile.start()
         tera.login(driver)
-        sleep(10)
         ndus = tera.get_cookie(driver)
         print(ndus)
-        # TODO-dung: continue here to get cookie + tera box token
-        # driver.get("https://www.google.com/")
-        sleep(10)
     except KeyboardInterrupt:
         sys.exit()
     except Exception as e:
