@@ -22,6 +22,7 @@ class ChromeProfile:
         self.driver = None
 
     def create_driver(self):
+
         options = uc2.ChromeOptions()
         path = os.path.join(Constant.PROFILE_FOLDER, self.email)
         if not os.path.isdir(path):
@@ -118,6 +119,7 @@ class ChromeProfile:
 
     def retrieve_driver(self):
         self.driver = self.create_driver()
+
         return self.driver
 
     def start(self):
