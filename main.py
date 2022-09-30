@@ -36,4 +36,3 @@ if __name__ == '__main__':
         sys.exit()
     except Exception as e:
         log_error(e, is_critical=True)
-
