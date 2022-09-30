@@ -24,6 +24,8 @@ class ChromeProfile:
     def create_driver(self):
         options = uc2.ChromeOptions()
         path = os.path.join(Constant.PROFILE_FOLDER, self.email)
+        if not os.path.isdir(path):
+            os.makedirs(path)
         options.add_argument(f"--user-data-dir={path}")
         options.add_argument(f"--profile-directory={self.email}")
         options.add_argument("--start-maximized")
