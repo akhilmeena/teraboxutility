@@ -1,6 +1,10 @@
+import sys
+
 from selenium.webdriver.common.by import By
 from time import sleep
 import common.constant as Constant
+from util.log import log_error
+from util.profile import ChromeProfile
 
 
 def login(driver):
