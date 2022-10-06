@@ -1,10 +1,9 @@
 import sys
 import common.constant as Constant
 
-from util import tera
-from util.profile import ChromeProfile
 from util.log import log_error, setup_logging
-from util.test import TeraBox
+from util.tera import TeraBox
+
 setup_logging()
 
 
