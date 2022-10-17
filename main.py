@@ -21,9 +21,8 @@ if __name__ == '__main__':
     greet()
     Constant.init()
     try:
-        tera = TeraBox("D:\\test.txt", '123')
-        tera.login()
-        tera.upload_commit()
+        tera = TeraBox("D:\\test.txt")
+        tera.upload()
     except KeyboardInterrupt:
         sys.exit()
     except Exception as e:
