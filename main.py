@@ -21,8 +21,9 @@ if __name__ == '__main__':
     greet()
     Constant.init()
     try:
-        tera = TeraBox("D:\\test.txt")
+        tera = TeraBox("D:\\test1")
         tera.upload()
+
     except KeyboardInterrupt:
         sys.exit()
     except Exception as e:

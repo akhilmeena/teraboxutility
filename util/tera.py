@@ -5,6 +5,8 @@ from cryptography.fernet import Fernet
 from selenium.webdriver.common.by import By
 import common.constant as Constant
 from util.profile import ChromeProfile
+import zipfile
+import shutil
 
 
 class TeraBox:
@@ -16,9 +18,11 @@ class TeraBox:
         self.driver = profile.retrieve_driver()
         self.cookie = None
         self.path = path
+        self.copy_path = self.path.split(".")[0] + '_copy'
         profile.start()
         self.login()
         self.cookie = self.get_cookie()
+        self.zip_directory()
 
     def login(self):
         self.driver.get("https://www.terabox.com/vietnamese/")
@@ -57,7 +61,7 @@ class TeraBox:
             print('Error')
 
     def upload(self):
-        path = self.zip_file()
+        path = self.path.split(".")[0] + '.zip'
         size = os.stat(path=path).st_size
         file_name = os.path.basename(path).split('/')[-1]
         md5 = self.upload_file(path_zip=path)
@@ -76,7 +80,6 @@ class TeraBox:
         response = requests.post(url=url, headers=headers, data=data)
 
     def zip_file(self):
-        self.encrypt_file()
         zip_name = self.path.split(".")[0] + '.zip'
         try:
             with pyzipper.AESZipFile(zip_name,
@@ -87,19 +90,40 @@ class TeraBox:
         except:
             pass
 
-    def encrypt_file(self):
+    def encrypt_file(self, file_path):
         key = Constant.env["KEY"]
         key = key.encode('utf-8')
         fernet = Fernet(key)
-        with open(self.path, 'rb') as file:
+        with open(file_path, 'rb') as file:
             original = file.read()
 
         encrypted = fernet.encrypt(original)
-        with open(self.path, 'wb') as encrypted_file:
+        with open(file_path, 'wb') as encrypted_file:
             encrypted_file.write(encrypted)
 
+    def zip_directory(self):
+        self.copy_directory()
+        zip_path = self.path.split(".")[0] + '.zip'
+        with zipfile.ZipFile(zip_path, mode='w') as zipf:
+            len_dir_path = len(self.path)
+            for root, _, files in os.walk(self.copy_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    self.encrypt_file(file_path=file_path)
+                    zipf.write(file_path, file_path[len_dir_path:])
+        self.delete(self.copy_path)
+        self.delete(zip_path)
 
+    def copy_directory(self):
+        shutil.copytree(self.path, self.copy_path)
 
+    def delete(self, path):
+        if os.path.isfile(path) or os.path.islink(path):
+            os.remove(path)
+        elif os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            raise ValueError("Path {} is not a file or dir.".format(path))
 
 
 
