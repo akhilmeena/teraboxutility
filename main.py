@@ -1,3 +1,4 @@
+import os
 import sys
 import common.constant as Constant
 
@@ -21,8 +22,10 @@ if __name__ == '__main__':
     greet()
     Constant.init()
     try:
-        tera = TeraBox("D:\\test1")
-        tera.upload()
+        a = ['terabox269@gmail.com:dung@123', 'autsaree1997@gmail.com:Ovlcicqjbslw54']
+        tera = TeraBox(a)
+        tera.get_all_dir()
+
     except KeyboardInterrupt:
         sys.exit()
     except Exception as e:

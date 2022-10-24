@@ -11,19 +11,26 @@ import shutil
 
 class TeraBox:
 
-    def __init__(self, path):
-        email = Constant.env["EMAIL"]
+    def __init__(self, emails):
+        self.path = Constant.env["PATH"]
+        email = emails[0]
         email = email.split(':')
-        profile = ChromeProfile(email[0], email[1], email[2])
-        self.driver = profile.retrieve_driver()
-        self.path = path
-        self.copy_path = self.path.split(".")[0] + '_copy'
         self.file_type = Constant.env["FILE_TYPE"]
-        self.zip_path = self.path.split(".")[0] + self.file_type
+        self.copy_path = email[0]
+        self.emails = emails
+        profile = ChromeProfile(email[0], email[1], Constant.env["BACKUP_EMAIL"])
+        self.driver = profile.retrieve_driver()
         profile.start()
         self.login()
         self.cookie = self.get_cookie()
-        self.zip_directory()
+
+    def loop_account(self):
+        for email in self.emails:
+            email = email.split(':')
+            profile = ChromeProfile(email[0], email[1], Constant.env["BACKUP_EMAIL"])
+            profile.start()
+            self.login()
+            self.cookie = self.get_cookie()
 
     def login(self):
         self.driver.get("https://www.terabox.com/vietnamese/")
@@ -39,7 +46,21 @@ class TeraBox:
         ndus = 'ndus=' + cookie.get('value')
         return ndus
 
-    def upload_file(self, path_zip):
+    def get_all_dir(self):
+        list_dir = os.listdir(self.path)
+        for data in list_dir:
+            dir_path = self.path + '\\' + data
+            if os.path.isdir(dir_path):
+                zip_path = dir_path + '.zip'
+                copy_path = dir_path + '_copy'
+                self.zip_directory(dir_path)
+                self.delete(copy_path)
+                self.upload(zip_path)
+                self.delete(zip_path)
+            else:
+                pass
+
+    def upload_file(self, zip_path):
         url_upload = 'https://c-jp.terabox.com/rest/2.0/pcs/superfile2'
         app_id = int(Constant.env["APP_ID"])
         params = {
@@ -54,7 +75,7 @@ class TeraBox:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                           'Chrome/105.0.0.0 Safari/537.36',
         }
-        files = {'file': open(path_zip, 'rb')}
+        files = {'file': open(zip_path, 'rb')}
         try:
             response = requests.post(url=url_upload, params=params, headers=headers, files=files)
             result = response.json()["md5"]
@@ -62,34 +83,23 @@ class TeraBox:
         except:
             print('Error')
 
-    def upload(self):
-        path = self.zip_path
+    def upload(self, zip_path):
+        path = zip_path
         size = os.stat(path=path).st_size
         file_name = os.path.basename(path).split('/')[-1]
-        md5 = self.upload_file(path_zip=path)
+        md5 = self.upload_file(path)
         url = 'https://www.terabox.com/api/create'
         headers = {
             'Cookie': self.cookie,
             'Content-Type': 'application/x-www-form-urlencoded',
         }
         data = {
-            'path': file_name,
+            'path': self.copy_path + '/' + file_name,
             'size': size,
             'block_list': '["' + md5 + '"]'
         }
 
         requests.post(url=url, headers=headers, data=data)
-        self.delete(self.zip_path)
-
-    def zip_file(self):
-        try:
-            with pyzipper.AESZipFile(self.zip_path,
-                                     'w',
-                                     compression=pyzipper.ZIP_LZMA) as zf:
-                zf.write(filename=self.path)
-                return zf.filename
-        except:
-            pass
 
     @staticmethod
     def encrypt_file(file_path):
@@ -103,19 +113,21 @@ class TeraBox:
         with open(file_path, 'wb') as encrypted_file:
             encrypted_file.write(encrypted)
 
-    def zip_directory(self):
-        self.copy_directory()
-        with zipfile.ZipFile(self.zip_path, mode='w') as zipf:
-            len_dir_path = len(self.path)
-            for root, _, files in os.walk(self.copy_path):
+    def zip_directory(self, dir_path):
+        dir_copy = self.copy_directory(dir_path=dir_path)
+        with zipfile.ZipFile(dir_path + '.zip', mode='w') as zipf:
+            len_dir_path = len(dir_path)
+            for root, _, files in os.walk(dir_copy):
                 for file in files:
                     file_path = os.path.join(root, file)
                     self.encrypt_file(file_path=file_path)
                     zipf.write(file_path, file_path[len_dir_path:])
-        self.delete(self.copy_path)
 
-    def copy_directory(self):
-        shutil.copytree(self.path, self.copy_path)
+    @staticmethod
+    def copy_directory(dir_path):
+        copy_path = dir_path + '_copy'
+        shutil.copytree(dir_path, copy_path)
+        return copy_path
 
     @staticmethod
     def delete(path):
