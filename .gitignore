@@ -5,4 +5,5 @@ __pycache__/
 temp/
 config/
 .env
-.env_test
+config/.env_testdung
+
