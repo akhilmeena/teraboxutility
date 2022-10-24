@@ -16,9 +16,10 @@ class TeraBox:
         email = email.split(':')
         profile = ChromeProfile(email[0], email[1], email[2])
         self.driver = profile.retrieve_driver()
-        self.cookie = None
         self.path = path
         self.copy_path = self.path.split(".")[0] + '_copy'
+        self.file_type = Constant.env["FILE_TYPE"]
+        self.zip_path = self.path.split(".")[0] + self.file_type
         profile.start()
         self.login()
         self.cookie = self.get_cookie()
@@ -40,7 +41,7 @@ class TeraBox:
 
     def upload_file(self, path_zip):
         url_upload = 'https://c-jp.terabox.com/rest/2.0/pcs/superfile2'
-        app_id = Constant.APP_ID
+        app_id = int(Constant.env["APP_ID"])
         params = {
             'method': 'upload',
             'app_id': app_id,
@@ -50,7 +51,8 @@ class TeraBox:
         }
         headers = {
             'Cookie': self.cookie,
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                          'Chrome/105.0.0.0 Safari/537.36',
         }
         files = {'file': open(path_zip, 'rb')}
         try:
@@ -61,11 +63,10 @@ class TeraBox:
             print('Error')
 
     def upload(self):
-        path = self.path.split(".")[0] + '.zip'
+        path = self.zip_path
         size = os.stat(path=path).st_size
         file_name = os.path.basename(path).split('/')[-1]
         md5 = self.upload_file(path_zip=path)
-        self.cookie = self.get_cookie()
         url = 'https://www.terabox.com/api/create'
         headers = {
             'Cookie': self.cookie,
@@ -77,12 +78,12 @@ class TeraBox:
             'block_list': '["' + md5 + '"]'
         }
 
-        response = requests.post(url=url, headers=headers, data=data)
+        requests.post(url=url, headers=headers, data=data)
+        self.delete(self.zip_path)
 
     def zip_file(self):
-        zip_name = self.path.split(".")[0] + '.zip'
         try:
-            with pyzipper.AESZipFile(zip_name,
+            with pyzipper.AESZipFile(self.zip_path,
                                      'w',
                                      compression=pyzipper.ZIP_LZMA) as zf:
                 zf.write(filename=self.path)
@@ -90,7 +91,8 @@ class TeraBox:
         except:
             pass
 
-    def encrypt_file(self, file_path):
+    @staticmethod
+    def encrypt_file(file_path):
         key = Constant.env["KEY"]
         key = key.encode('utf-8')
         fernet = Fernet(key)
@@ -103,8 +105,7 @@ class TeraBox:
 
     def zip_directory(self):
         self.copy_directory()
-        zip_path = self.path.split(".")[0] + '.zip'
-        with zipfile.ZipFile(zip_path, mode='w') as zipf:
+        with zipfile.ZipFile(self.zip_path, mode='w') as zipf:
             len_dir_path = len(self.path)
             for root, _, files in os.walk(self.copy_path):
                 for file in files:
@@ -112,21 +113,15 @@ class TeraBox:
                     self.encrypt_file(file_path=file_path)
                     zipf.write(file_path, file_path[len_dir_path:])
         self.delete(self.copy_path)
-        self.delete(zip_path)
 
     def copy_directory(self):
         shutil.copytree(self.path, self.copy_path)
 
-    def delete(self, path):
+    @staticmethod
+    def delete(path):
         if os.path.isfile(path) or os.path.islink(path):
             os.remove(path)
         elif os.path.isdir(path):
             shutil.rmtree(path)
         else:
             raise ValueError("Path {} is not a file or dir.".format(path))
-
-
-
-
-
-

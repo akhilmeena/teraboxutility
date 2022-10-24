@@ -23,9 +23,7 @@ if __name__ == '__main__':
     try:
         tera = TeraBox("D:\\test1")
         tera.upload()
-
     except KeyboardInterrupt:
         sys.exit()
     except Exception as e:
         log_error(e, is_critical=True)
-
