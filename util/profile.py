@@ -28,6 +28,8 @@ class ChromeProfile:
         options.add_argument(f"--user-data-dir={path}")
         options.add_argument(f"--profile-directory={self.email}")
         options.add_argument("--start-maximized")
+        options.add_argument("--disable-web-security")
+        options.add_argument("--allow-running-insecure-content")
         prefs = {
             "intl.accept_languages": 'en_US,en',
             "credentials_enable_service": False,

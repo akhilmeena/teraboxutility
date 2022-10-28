@@ -1,6 +1,8 @@
+from pathlib import Path
+from time import sleep
+
 import requests
 import os
-import pyzipper
 from cryptography.fernet import Fernet
 from selenium.webdriver.common.by import By
 import common.constant as Constant
@@ -12,28 +14,29 @@ import shutil
 class TeraBox:
 
     def __init__(self, emails):
-        self.path = Constant.env["PATH"]
-        email = emails[0]
+        self.path = Constant.env["UPLOAD_PATH"]
+        email = Constant.env["EMAIL"]
         email = email.split(':')
-        self.file_type = Constant.env["FILE_TYPE"]
-        self.copy_path = email[0]
+        profile = ChromeProfile(email[0], email[1], email[2])
         self.emails = emails
-        profile = ChromeProfile(email[0], email[1], Constant.env["BACKUP_EMAIL"])
+        self.copy_path = email[0]
         self.driver = profile.retrieve_driver()
+        self.zip_path = self.path.split(".")[0] + '.zip'
         profile.start()
         self.login()
         self.cookie = self.get_cookie()
+        self.download_path = Constant.env["DOWNLOAD_PATH"]
 
-    def loop_account(self):
+    def download(self):
         for email in self.emails:
-            email = email.split(':')
-            profile = ChromeProfile(email[0], email[1], Constant.env["BACKUP_EMAIL"])
-            profile.start()
-            self.login()
-            self.cookie = self.get_cookie()
+            self.download_from_terabox(email)
+            sleep(10)
+            self.unzip_in_download_folder(email)
+            self.delete(str(os.path.join(Path.home(), "Downloads")) + '\\' + email + '.zip')
+            self.decrypt_in_folder(email)
 
     def login(self):
-        self.driver.get("https://www.terabox.com/vietnamese/")
+        self.driver.get("https://www.terabox.com/")
         if 'main' not in self.driver.current_url:
             login_xpath = "//*[@id=\"app\"]/div/div/div[1]/div[4]/div/div[2]/div/div[2]/div/div[1]"
             self.driver.find_element(By.XPATH, login_xpath).click()
@@ -46,26 +49,26 @@ class TeraBox:
         ndus = 'ndus=' + cookie.get('value')
         return ndus
 
-    def get_all_dir(self):
+    def upload(self):
         list_dir = os.listdir(self.path)
         for data in list_dir:
-            dir_path = self.path + '\\' + data
-            if os.path.isdir(dir_path):
-                zip_path = dir_path + '.zip'
-                copy_path = dir_path + '_copy'
-                self.zip_directory(dir_path)
-                self.delete(copy_path)
-                self.upload(zip_path)
-                self.delete(zip_path)
-            else:
-                pass
+            if data in self.emails:
+                dir_path = self.path + '\\' + data
+                if os.path.isdir(dir_path):
+                    zip_path = dir_path + '.zip'
+                    copy_path = dir_path + '_copy'
+                    self.zip_directory(dir_path)
+                    self.delete(copy_path)
+                    self.call_create_api(zip_path, data)
+                    self.delete(zip_path)
+                else:
+                    pass
 
-    def upload_file(self, zip_path):
+    def pre_upload(self, zip_path):
         url_upload = 'https://c-jp.terabox.com/rest/2.0/pcs/superfile2'
-        app_id = int(Constant.env["APP_ID"])
         params = {
             'method': 'upload',
-            'app_id': app_id,
+            'app_id': 250528,
             'path': '/abc.txt',
             'uploadid': 'N1-MTQu',
             'partseq': 0
@@ -80,21 +83,22 @@ class TeraBox:
             response = requests.post(url=url_upload, params=params, headers=headers, files=files)
             result = response.json()["md5"]
             return result
-        except:
-            print('Error')
 
-    def upload(self, zip_path):
+        except requests.exceptions.HTTPError as err:
+            print(err)
+
+    def call_create_api(self, zip_path, email):
         path = zip_path
         size = os.stat(path=path).st_size
         file_name = os.path.basename(path).split('/')[-1]
-        md5 = self.upload_file(path)
+        md5 = self.pre_upload(path)
         url = 'https://www.terabox.com/api/create'
         headers = {
             'Cookie': self.cookie,
             'Content-Type': 'application/x-www-form-urlencoded',
         }
         data = {
-            'path': self.copy_path + '/' + file_name,
+            'path': email + '/' + file_name,
             'size': size,
             'block_list': '["' + md5 + '"]'
         }
@@ -137,3 +141,43 @@ class TeraBox:
             shutil.rmtree(path)
         else:
             raise ValueError("Path {} is not a file or dir.".format(path))
+
+    def download_from_terabox(self, email):
+        self.driver.get('https://www.terabox.com/main?category=all&path=%2F' + email)
+        self.driver.find_element(By.CLASS_NAME, "u-checkbox").click()
+        self.driver.find_element(By.CSS_SELECTOR, "body > div.main-page > div.box > div.view-container-box > "
+                                                  "div.nd-main-list.hasAd > div.wp-s-core-pan > div > "
+                                                  "div.wp-s-core-pan__header.is-show-header > div > "
+                                                  "div.wp-s-core-pan__header-tool-bar--action > div > div > "
+                                                  "div.wp-s-agile-tool-bar__h-group > "
+                                                  "div > div:nth-child(4) > button").click()
+
+    @staticmethod
+    def unzip(in_path, out_path):
+        with zipfile.ZipFile(in_path, "r") as zip_ref:
+            zip_ref.extractall(out_path)
+
+    def unzip_in_download_folder(self, email):
+        path_to_download_folder = str(os.path.join(Path.home(), "Downloads")) + '\\' + email + '.zip'
+        out_path = self.download_path
+        self.unzip(path_to_download_folder, out_path)
+        os.chdir(out_path)
+        os.rename('_copy', email)
+
+    def decrypt_in_folder(self, email):
+        out_path = self.download_path + email
+        for root, _, files in os.walk(out_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                self.decrypt(file_path)
+
+    @staticmethod
+    def decrypt(path):
+        key = Constant.env["KEY"]
+        key = key.encode('utf-8')
+        fernet = Fernet(key)
+        with open(path, 'rb') as enc_file:
+            encrypted = enc_file.read()
+        decrypted = fernet.decrypt(encrypted)
+        with open(path, 'wb') as dec_file:
+            dec_file.write(decrypted)

@@ -1,7 +1,5 @@
-import os
 import sys
 import common.constant as Constant
-
 from util.log import log_error, setup_logging
 from util.tera import TeraBox
 
@@ -22,9 +20,10 @@ if __name__ == '__main__':
     greet()
     Constant.init()
     try:
-        a = ['terabox269@gmail.com:dung@123', 'autsaree1997@gmail.com:Ovlcicqjbslw54']
+        a = ['nguyenthanhdungktum@gmail.com']
         tera = TeraBox(a)
-        tera.get_all_dir()
+        # tera.upload()
+        tera.download()
 
     except KeyboardInterrupt:
         sys.exit()
