@@ -1,6 +1,7 @@
 from pathlib import Path
 from time import sleep
 
+import time
 import requests
 import os
 from cryptography.fernet import Fernet
@@ -30,7 +31,8 @@ class TeraBox:
     def download(self):
         for email in self.emails:
             self.download_from_terabox(email)
-            sleep(10)
+        sleep(10)
+        for email in self.emails:
             self.unzip_in_download_folder(email)
             self.delete(str(os.path.join(Path.home(), "Downloads")) + '\\' + email + '.zip')
             self.decrypt_in_folder(email)
@@ -151,6 +153,8 @@ class TeraBox:
                                                   "div.wp-s-core-pan__header-tool-bar--action > div > div > "
                                                   "div.wp-s-agile-tool-bar__h-group > "
                                                   "div > div:nth-child(4) > button").click()
+        sleep(5)
+        self.driver.find_element(By.CLASS_NAME, 'left-button').click()
 
     @staticmethod
     def unzip(in_path, out_path):
