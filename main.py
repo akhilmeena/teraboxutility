@@ -20,7 +20,7 @@ if __name__ == '__main__':
     greet()
     Constant.init()
     try:
-        a = ['nguyenthanhdungktum@gmail.com']
+        a = ['nguyenthanhdungktum@gmail.com', 'terabox269@gmail.com']
         tera = TeraBox(a)
         # tera.upload()
         tera.download()
