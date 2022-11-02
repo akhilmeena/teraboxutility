@@ -1,11 +1,7 @@
 import sys
 import common.constant as Constant
-
-from time import sleep
-
-from util import tera
-from util.profile import ChromeProfile
 from util.log import log_error, setup_logging
+from util.tera import TeraBox
 
 setup_logging()
 
@@ -24,14 +20,11 @@ if __name__ == '__main__':
     greet()
     Constant.init()
     try:
-        email = Constant.env["EMAIL"]
-        email = email.split(':')
-        profile = ChromeProfile(email[0], email[1], email[2])
-        driver = profile.retrieve_driver()
-        profile.start()
-        tera.login(driver)
-        ndus = tera.get_cookie(driver)
-        print(ndus)
+        a = ['nguyenthanhdungktum@gmail.com', 'terabox269@gmail.com']
+        tera = TeraBox(a)
+        # tera.upload()
+        tera.download()
+
     except KeyboardInterrupt:
         sys.exit()
     except Exception as e:
