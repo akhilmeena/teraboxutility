@@ -1,11 +1,10 @@
-from pathlib import Path
 from time import sleep
 
 import requests
 import os
-from cryptography.fernet import Fernet
 from selenium.webdriver.common.by import By
 import common.constant as Constant
+from util import helper
 from util.profile import ChromeProfile
 import zipfile
 import shutil
@@ -29,11 +28,11 @@ class TeraBox:
 
     def download(self):
         for email in self.emails:
-            self.download_from_terabox(email)
+            self.download_zip(email)
         sleep(int(Constant.env["TIME_DOWNLOAD"]))
         for email in self.emails:
-            self.unzip_in_download_folder(email)
-            self.delete(str(os.path.join(Path.home(), "Downloads")) + '\\' + email + '.zip')
+            self.unzip_in_folder(email)
+            helper.delete(Constant.env["DOWNLOAD_LOCATION"] + '\\' + email + '.zip')
             self.decrypt_in_folder(email)
 
     def login(self):
@@ -59,9 +58,9 @@ class TeraBox:
                     zip_path = dir_path + '.zip'
                     copy_path = dir_path + '_copy'
                     self.zip_directory(dir_path)
-                    self.delete(copy_path)
+                    helper.delete(copy_path)
                     self.call_create_api(zip_path, data)
-                    self.delete(zip_path)
+                    helper.delete(zip_path)
                 else:
                     pass
 
@@ -106,18 +105,6 @@ class TeraBox:
 
         requests.post(url=url, headers=headers, data=data)
 
-    @staticmethod
-    def encrypt_file(file_path):
-        key = Constant.env["KEY"]
-        key = key.encode('utf-8')
-        fernet = Fernet(key)
-        with open(file_path, 'rb') as file:
-            original = file.read()
-
-        encrypted = fernet.encrypt(original)
-        with open(file_path, 'wb') as encrypted_file:
-            encrypted_file.write(encrypted)
-
     def zip_directory(self, dir_path):
         dir_copy = self.copy_directory(dir_path=dir_path)
         with zipfile.ZipFile(dir_path + '.zip', mode='w') as zipf:
@@ -125,7 +112,7 @@ class TeraBox:
             for root, _, files in os.walk(dir_copy):
                 for file in files:
                     file_path = os.path.join(root, file)
-                    self.encrypt_file(file_path=file_path)
+                    helper.encrypt_file(file_path=file_path)
                     zipf.write(file_path, file_path[len_dir_path:])
 
     @staticmethod
@@ -134,16 +121,7 @@ class TeraBox:
         shutil.copytree(dir_path, copy_path)
         return copy_path
 
-    @staticmethod
-    def delete(path):
-        if os.path.isfile(path) or os.path.islink(path):
-            os.remove(path)
-        elif os.path.isdir(path):
-            shutil.rmtree(path)
-        else:
-            raise ValueError("Path {} is not a file or dir.".format(path))
-
-    def download_from_terabox(self, email):
+    def download_zip(self, email):
         self.driver.get('https://www.terabox.com/main?category=all&path=%2F' + email)
         self.driver.find_element(By.CLASS_NAME, "u-checkbox").click()
         self.driver.find_element(By.CSS_SELECTOR, "body > div.main-page > div.box > div.view-container-box > "
@@ -159,15 +137,10 @@ class TeraBox:
         except:
             pass
 
-    @staticmethod
-    def unzip(in_path, out_path):
-        with zipfile.ZipFile(in_path, "r") as zip_ref:
-            zip_ref.extractall(out_path)
-
-    def unzip_in_download_folder(self, email):
-        path_to_download_folder = str(os.path.join(Path.home(), "Downloads")) + '\\' + email + '.zip'
+    def unzip_in_folder(self, email):
+        path_to_download_folder = Constant.env["DOWNLOAD_LOCATION"] + '\\' + email + '.zip'
         out_path = self.download_path
-        self.unzip(path_to_download_folder, out_path)
+        helper.unzip(path_to_download_folder, out_path)
         os.chdir(out_path)
         os.rename('_copy', email)
 
@@ -176,15 +149,5 @@ class TeraBox:
         for root, _, files in os.walk(out_path):
             for file in files:
                 file_path = os.path.join(root, file)
-                self.decrypt(file_path)
+                helper.decrypt(file_path)
 
-    @staticmethod
-    def decrypt(path):
-        key = Constant.env["KEY"]
-        key = key.encode('utf-8')
-        fernet = Fernet(key)
-        with open(path, 'rb') as enc_file:
-            encrypted = enc_file.read()
-        decrypted = fernet.decrypt(encrypted)
-        with open(path, 'wb') as dec_file:
-            dec_file.write(decrypted)
