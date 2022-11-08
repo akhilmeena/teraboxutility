@@ -42,7 +42,7 @@ class TeraBox:
             self.driver.find_element(By.XPATH, login_xpath).click()
         else:
             pass
-        sleep(constant.WAIT_RELOAD)
+        sleep(Constant.WAIT_RELOAD)
 
     def get_cookie(self):
         self.driver.get(self.driver.current_url)
