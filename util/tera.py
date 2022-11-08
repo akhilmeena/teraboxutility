@@ -38,10 +38,11 @@ class TeraBox:
     def login(self):
         self.driver.get("https://www.terabox.com/")
         if 'main' not in self.driver.current_url:
-            login_xpath = "//*[@id=\"app\"]/div/div/div[1]/div[4]/div/div[2]/div/div[2]/div/div[1]"
+            login_xpath = "/html/body/div[1]/div/div[1]/div[4]/div/div[2]/div/div[2]/div/div[1]"
             self.driver.find_element(By.XPATH, login_xpath).click()
         else:
             pass
+        sleep(constant.WAIT_RELOAD)
 
     def get_cookie(self):
         self.driver.get(self.driver.current_url)
