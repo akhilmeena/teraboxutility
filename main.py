@@ -1,8 +1,9 @@
 import sys
+
 import common.constant as Constant
 from util.log import log_error, setup_logging
+from util.profile import ChromeProfile
 from util.tera import TeraBox
-
 setup_logging()
 
 
@@ -20,7 +21,7 @@ if __name__ == '__main__':
     greet()
     Constant.init()
     try:
-        a = ['nguyenthanhdungktum@gmail.com', 'terabox269@gmail.com']
+        a = ['nguyenthanhdungktum@gmail.com']
         tera = TeraBox(a)
         # tera.upload()
         tera.download()

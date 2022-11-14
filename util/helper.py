@@ -2,12 +2,10 @@ import os
 import random
 import shutil
 import zipfile
-
 import requests
 import math
-
+import time
 from cryptography.fernet import Fernet
-
 import common.constant as Constant
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException
@@ -162,3 +160,22 @@ def decrypt(path):
     decrypted = fernet.decrypt(encrypted)
     with open(path, 'wb') as dec_file:
         dec_file.write(decrypted)
+
+def download_wait(directory):
+    """
+    Wait for downloads.
+
+    Args
+    ----
+    directory : str
+        The path to the folder where the files will be downloaded.
+
+    """
+    dl_wait = True
+    while dl_wait:
+        time.sleep(15)
+        dl_wait = False
+        files = os.listdir(directory)
+        for fname in files:
+            if fname.endswith('.crdownload'):
+                dl_wait = True

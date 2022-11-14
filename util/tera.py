@@ -29,7 +29,7 @@ class TeraBox:
     def download(self):
         for email in self.emails:
             self.download_zip(email)
-        sleep(int(Constant.env["TIME_DOWNLOAD"]))
+        helper.download_wait(Constant.env["DOWNLOAD_LOCATION"])
         for email in self.emails:
             self.unzip_in_folder(email)
             helper.delete(Constant.env["DOWNLOAD_LOCATION"] + '\\' + email + '.zip')
@@ -151,4 +151,5 @@ class TeraBox:
             for file in files:
                 file_path = os.path.join(root, file)
                 helper.decrypt(file_path)
+
 
