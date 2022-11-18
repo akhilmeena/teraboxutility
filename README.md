@@ -12,27 +12,23 @@ Need to have google chrome to use.
 
 ## Usage
 
-In file main.py, Need to specify the path to the directory.
 
 ```python
-from util.tera import TeraBox
+from terabox_utility.util.tera import TeraBox
 
 # Set path to folder
 # Example D:\test1
-tera = TeraBox("D:\\test1")
+a = ['nguyenthanhdungktum@gmail.com']
+account = 'email:password:backup_email'
+key = 'ZmDfcTF7_60GrrY167zsiPd67pEvs0aGOv2oasOM1Pg='
+upload_path = 'D:\\profiles'
+download_path = 'D:\\test1\\'
+download_location = 'C:\\Users\\Admin\\Downloads'
+tera = TeraBox(a, account, key, upload_path, download_path, download_location)
+#Upload
 tera.upload()
-```
-Create file .env with format like this
-
-```cvs
-# Email to login google account.
-EMAIL=email:password:backup_email
-# Key use to encrypt and decrypt. It is any string. sdfsjd is example.
-KEY='sdfsjd'
-# App_id in TeraBox
-APP_ID='250528'
-# Type of file is .zip
-FILE_TYPE=.zip
+#Download
+tera.download()
 ```
 
 ## Credit
