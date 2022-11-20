@@ -3,3 +3,7 @@ __pycache__/
 .venv/
 .vscode/
 temp/
+config/
+.env
+config/.env_test
+
